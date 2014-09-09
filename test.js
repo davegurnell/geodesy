@@ -154,3 +154,57 @@ test('geo', function(assert) {
 });
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+function createApproxAssertion(assert, delta) {
+    delta = delta || 0.0000005;
+    return function(a, b, msg) {
+        msg = msg || "";
+        assert.ok(a >= (b - delta), msg + " (" + a + " >= " + b + " - " + delta + ")");
+        assert.ok(a <= (b + delta), msg + " (" + a + " <= " + b + " + " + delta + ")");
+    }
+}
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+
+test('DJG test case 1: NGR -> EN -> OSGB36 -> WGS84', function(assert) {
+    var LatLonE = require('./latlon-ellipsoid.js');
+    var OsGridRef = require('./osgridref.js');
+    var assertApproxEqual = createApproxAssertion(assert);
+
+    var ngr = "TQ 44359 80653";
+
+    var grid = OsGridRef.parse(ngr);
+    assert.equal(grid.easting, 544359);
+    assert.equal(grid.northing, 180653);
+
+    var osgb = OsGridRef.osGridToLatLon(grid);
+    assertApproxEqual(osgb.lat, 51.505863, "osgb36 latitude");
+    assertApproxEqual(osgb.lon,  0.080288, "osgb36 longitude");
+
+    var wgs = osgb.convertDatum(LatLonE.datum.WGS84);
+    assertApproxEqual(wgs.lat, 51.506377, "wgs84 latitude");  // fails - actually 51.318754149305406
+    assertApproxEqual(wgs.lon,  0.078658, "wgs84 longitude"); // passes
+
+    assert.end();
+});
+
+test('DJG test case 2: WGS84 -> OGSB36 -> EN -> NGR', function(assert) {
+    var LatLonE = require('./latlon-ellipsoid.js');
+    var OsGridRef = require('./osgridref.js');
+    var assertApproxEqual = createApproxAssertion(assert);
+
+    var wgs = new LatLonE(51.506376, 0.078658, LatLonE.datum.WGS84);
+
+    var osgb = wgs.convertDatum(LatLonE.datum.OSGB36);
+    assertApproxEqual(osgb.lat, 51.505863, "osgb36 latitude");
+    assertApproxEqual(osgb.lon,  0.080288, "osgb36 longitude");
+
+    var grid = OsGridRef.latLonToOsGrid(osgb); // fails - no `datum` field on osgb
+    assert.equal(grid.easting , 544359); // fails - actually 544358
+    assert.equal(grid.northing, 180653); // fails - actually 180652
+
+    var ngr = grid.toString(10);
+    assert.equal(ngr, "TQ 44359 80653");
+
+    assert.end();
+});
