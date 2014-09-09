@@ -172,17 +172,21 @@ test('DJG test case 1: NGR -> EN -> OSGB36 -> WGS84', function(assert) {
     var assertApproxEqual = createApproxAssertion(assert);
 
     var ngr = "TQ 44359 80653";
+    console.log('ngr', JSON.stringify(ngr, null, 2));
 
     var grid = OsGridRef.parse(ngr);
+    console.log('grid', JSON.stringify(grid, null, 2));
     assert.equal(grid.easting, 544359);
     assert.equal(grid.northing, 180653);
 
     var osgb = OsGridRef.osGridToLatLon(grid);
+    console.log('osgb', JSON.stringify(osgb, null, 2));
     assertApproxEqual(osgb.lat, 51.505863, "osgb36 latitude");
     assertApproxEqual(osgb.lon,  0.080288, "osgb36 longitude");
 
     var wgs = osgb.convertDatum(LatLonE.datum.WGS84);
-    assertApproxEqual(wgs.lat, 51.506377, "wgs84 latitude");  // fails - actually 51.318754149305406
+    console.log('wgs', JSON.stringify(wgs, null, 2));
+    assertApproxEqual(wgs.lat, 51.506377, "wgs84 latitude");  // fails - comes out as 51.318754149305406
     assertApproxEqual(wgs.lon,  0.078658, "wgs84 longitude"); // passes
 
     assert.end();
@@ -193,17 +197,21 @@ test('DJG test case 2: WGS84 -> OGSB36 -> EN -> NGR', function(assert) {
     var OsGridRef = require('./osgridref.js');
     var assertApproxEqual = createApproxAssertion(assert);
 
-    var wgs = new LatLonE(51.506376, 0.078658, LatLonE.datum.WGS84);
+    var wgs = new LatLonE(51.506377, 0.078658, LatLonE.datum.WGS84);
+    console.log('wgs', JSON.stringify(wgs, null, 2));
 
     var osgb = wgs.convertDatum(LatLonE.datum.OSGB36);
+    console.log('osgb', JSON.stringify(osgb, null, 2));
     assertApproxEqual(osgb.lat, 51.505863, "osgb36 latitude");
     assertApproxEqual(osgb.lon,  0.080288, "osgb36 longitude");
 
     var grid = OsGridRef.latLonToOsGrid(osgb); // fails - no `datum` field on osgb
+    console.log('grid', JSON.stringify(grid, null, 2));
     assert.equal(grid.easting , 544359); // fails - actually 544358
     assert.equal(grid.northing, 180653); // fails - actually 180652
 
     var ngr = grid.toString(10);
+    console.log('ngr', JSON.stringify(ngr, null, 2));
     assert.equal(ngr, "TQ 44359 80653");
 
     assert.end();
