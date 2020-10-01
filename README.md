@@ -1,141 +1,223 @@
-geodesy
-=======
+Geodesy functions
+=================
 
-Libraries of geodesy functions implemented in JavaScript – intended to serve as examples or
-starting-points for people wanting to develop geodesy applications (in JavaScript or other languages),
-though they can also be used as-is.
+[![Build Status](https://travis-ci.org/chrisveness/geodesy.svg?branch=master)](https://travis-ci.org/chrisveness/geodesy)
+[![Coverage Status](https://coveralls.io/repos/github/chrisveness/geodesy/badge.svg)](https://coveralls.io/github/chrisveness/geodesy)
+[![Documentation](https://img.shields.io/badge/docs-www.movable--type.co.uk%2Fscripts%2Fgeodesy--library.html-lightgrey.svg)](https://www.movable-type.co.uk/scripts/geodesy-library.html)
 
-latlon.js
----------
+These libraries started life (a long time ago) as simple ‘latitude/longitude’ code fragments
+covering distances and bearings, intended to help people who had little experience of geodesy, and
+perhaps limited programming experience.
 
-This is a library of geodesy functions for working with points and paths on (a spherical model of)
-the earth’s surface, including (orthodromic) great-circle geodesics and (loxodromic) rhumb lines.
-All calculations are done using spherical trigonometry.
+The intention was to have clear, simple illustrative code samples which could be adapted and re-used
+in other projects (whether those be coded in JavaScript, Java, C++, Excel VBA, or anything else...).
+With its untyped C-style syntax, JavaScript reads remarkably close to pseudo-code, exposing the
+algorithms with a minimum of syntactic distractions
 
-The library includes the following functions:
+While still valid for that purpose, they have grown since then into considerable libraries, based
+around:
+- simpler **trig**-based functions (distance, bearing, etc) based on a **spherical earth** model
+- more sophisticated **trig**-based functions (distance, bearing, etc) based on a
+  more accurate **ellipsoidal earth** model
+- **vector**-based functions mostly based on a **spherical** earth model, with some **ellipsoidal**
+  functions
 
-- `distanceTo` destination point (using haversine formulation)
-- `bearingTo` destination point
-- `finalBearingTo` destination point
-- `midpointTo` destination point
-- `destinationPoint` following initial bearing for given distance
-- `intersection` of two paths
-- `rhumbDistanceTo` destination point
-- `rhumbBearingTo` destination point
-- `rhumbDestinationPoint` following given bearing for given distance
-- `rhumbMidpointTo` destination point
+Complementing these are various mapping-related functions covering:
+- UTM coordinates & MGRS grid references
+- UK Ordnance Survey (OSGB) national grid references
 
-Full details are available at www.movable-type.co.uk/scripts/latlong.html.
+And also functions for historical datum conversions (such as between NAD83, OSGB36, Irl1975, 
+etc) and modern reference frame conversions (such as ITRF2014, ETRF2000, GDA94, etc), 
+and conversions between geodetic (latitude/longitude) coordinates and geocentric cartesian (x/y/z) 
+coordinates.
 
-latlon-vincenty.js
-------------------
+There are also supporting libraries:
+- 3d vector manipulation functions (supporting cartesian (x/y/z) coordinates and n-vector geodesy)
+- functions for conversion between decimal degrees and (sexagesimal) degrees/minutes/seconds
 
-Vincenty’s formulae for ‘direct and inverse solutions of geodesics on the ellipsoid’;
-these give distances and bearings on an ellipsoidal earth model accurate to within 0.5mm distance,
-0.000015″ bearing.
+The spherical-earth model provides simple formulae covering most ‘everyday’ accuracy requirements;
+the ellipsoidal-earth model provides more accurate formulae at the expense of complexity. The
+vector-based functions provide an alternative approach to the trig-based functions, with some
+overlapping functionality; which one to use may depend on availability of related functions or on
+other considerations.
 
-The library includes the following wrapper functions:
+These functions are as language-agnostic as possible, avoiding excessive use of
+JavaScript-specific language features which would not be recognised by users of other languages
+(and which might be difficult to translate to other languages). I use Greek letters in variables
+representing maths symbols conventionally presented as Greek letters: I value the great benefit in
+legibility over the minor inconvenience in typing.
 
-- `distanceTo` destination point
-- `initialBearingTo` destination point
-- `finalBearingTo` destination point
-- `destinationPoint` following initial bearing for given distance
-- `finalBearingOn` initial bearing for given distance
+This version 2 of the library uses JavaScript ES classes and modules to organise the 
+interdependencies; this makes the code both more immediately readable than previously, and also more 
+accessible to non-JavaScript readers (always  bearing in mind JavaScript uses prototype-based 
+classes rather than classical inheritance-based classes). For older browsers (or Node.js <8.0.0), 
+[v1.1.3](https://github.com/chrisveness/geodesy/tree/v1.1.3) is ES5-based. Note that there are 
+[breaking changes](https://www.movable-type.co.uk/scripts/geodesy-library-migrating-from-v1.html) 
+in moving from version 1 to version 2. 
 
-The heaving lifting is done in two routines:
+While some aspects of the library are quite complex to understand and use, basic usage is simple –
+for instance:
 
-- `direct` (implementing the direct solution of geodesics on the ellipsoid)
-- `inverse` (implementing the inverse solution of geodesics on the ellipsoid)
+- to find the distance between two points using a simple spherical earth model:
 
-Full details are available at www.movable-type.co.uk/scripts/latlong-vincenty.html.
+```javascript
+import LatLon from '/js/geodesy/latlon-spherical.js';
+const p1 = new LatLon(52.205, 0.119);
+const p2 = new LatLon(48.857, 2.351);
+const d = p1.distanceTo(p2); // 404.3×10³ m
+```
 
-latlon-ellipsoid.js
--------------------
+- or to find the destination point for a given distance and initial bearing on an ellipsoidal model
+  earth:
 
-Geodesy tools for an ellipsoidal earth model.
+```javascript
+import LatLon from '/js/geodesy/latlon-ellipsoidal-vincency.js';
+const p1 = new LatLon(-37.95103, 144.42487);
+const dist = 54972.271;
+const brng = 306.86816;
+const p2 = p1.destinationPoint(dist, brng); // 37.6528°S, 143.9265°E
+```
 
-The `LatLonE` object incorporates not just latitude & longitude coordinates, but also the datum the
-lat/lon point is defined on.
+Full documentation is available at [www.movable-type.co.uk/scripts/geodesy-library.html](https://www.movable-type.co.uk/scripts/geodesy-library.html), 
+and tests in the [browser](https://www.movable-type.co.uk/scripts/test/geodesy-test.html) as well as
+[Travis CI](https://travis-ci.org/chrisveness/geodesy).
 
-`LatLonE` also holds ellipsoid parameters and Helmert transform parameters for translating between
-different datums (e.g. between OSGB36 & WGS-84).
+Usage
+-----
 
-The `convertDatum` function performs such translations between datums.
+While originally intended as illustrative code fragments, these functions can be used ‘as-is’;
+either client-side in-browser, or with Node.js.
 
-The library includes:
+### Usage in browser
 
-- `ellipsoid` parameters
-- `datum` parameters (reference ellipsoid & Helmert transform parameters)
-- `convertDatum`: convert lat/lon point to new datum
-- `toCartesian`: convert lat/lon point to ECEF 3-d vector
-- `toLatLon`: convert ECEF 3-d vector to lat/lon point
+The library can be used in the browser by taking a local copy, or loading it from
+    [jsDelivr](https://www.jsdelivr.com/package/npm/geodesy): for example,
 
-More information at www.movable-type.co.uk/scripts/latlong-convert-coords.html.
+```html
+<!doctype html><title>geodesy example</title><meta charset="utf-8">
+<script type="module">
+    import LatLon from 'https://cdn.jsdelivr.net/npm/geodesy@2.2.1/latlon-spherical.min.js';
 
-latlon-vectors.js
------------------
+    const p1 = new LatLon(50.06632, -5.71475);
+    const p2 = new LatLon(58.64402, -3.07009);
 
-This is a library of functions for working with points and paths on (a spherical model of) the
-earth’s surface using a vector-based approach using ‘n-vectors’ (rather than the more common
-spherical trigonometry; a vector-based approach makes most calculations much simpler, and easier to
-follow, compared with trigonometric equivalents).
+    const d = p1.distanceTo(p2);
+    console.assert(d.toFixed(3) == '968874.704');
 
-The library includes:
+    const mid = p1.midpointTo(p2);
+    console.assert(mid.toString('dms') == '54° 21′ 44″ N, 004° 31′ 51″ W');
+</script>
+```
 
-- `distanceTo` destination point
-- `bearingTo` destination point
-- `midpointTo` destination point
-- `destinationPoint` following initial bearing for given distance
-- `intersection` of two paths
-- `crossTrackDistanceTo` great circle path
-- `enclosedBy` polygon
-- `meanOf` set of points
+### Usage in Node.js
 
-More information at www.movable-type.co.uk/scripts/latlong-vectors.html.
+The library can be loaded from [npm](https://www.npmjs.com/package/geodesy) to be used in a Node.js app 
+(in Node.js v13.2.0+, or using the [esm](https://www.npmjs.com/package/esm) package in 
+v8.0.0–v12.15.0<sup title="v12.16.0+ is not compatible with esm@3.2.25">*</sup>):
 
-osgridref.js
-------------
+```shell
+$ npm install geodesy esm
+$ node -r esm
+> import LatLon from 'geodesy/latlon-spherical.js';
+> const p1 = new LatLon(50.06632, -5.71475);
+> const p2 = new LatLon(58.64402, -3.07009);
+> const d = p1.distanceTo(p2);
+> console.assert(d.toFixed(3) == '968874.704');
+> const mid = p1.midpointTo(p2);
+> console.assert(mid.toString('dms') == '54° 21′ 44″ N, 004° 31′ 51″ W');
+```
 
-Routines for converting between Ordnance Survey grid references and (OSGB-36) latitude/longitude
-coordinates, based on Ordnance Survey formulae.
+For TypeScript users, type definitions are available from DefinitelyTyped: [www.npmjs.com/package/@types/geodesy](https://www.npmjs.com/package/@types/geodesy).
 
-The library includes:
+### Other examples
 
-- `latLonToOsGrid`: convert (OSGB) latitude/longitude to (numeric) OS grid reference
-- `osGridToLatLon`: convert (numeric) OS grid reference to (OSGB) latitude/longitude
-- `parse` standard format grid reference to numeric grid reference
-- `toString`: convert numeric grid reference to standard format
+Some examples of calculations possible with the libraries:
 
-More information at www.movable-type.co.uk/scripts/latlong-gridref.html.
+e.g. for geodesic distance on an ellipsoidal model earth using Vincenty’s algorithm:
 
-geohash.js
-------------
+```javascript
+import LatLon from 'geodesy/latlon-ellipsoidal-vincenty.js';
 
-Functions to convert [geohash](http://en.wikipedia.org/wiki/Geohash) to/from latitude/longitude
-points, also to determine bounds of a geohash cell and find neighbours of a geohash.
+const p1 = new LatLon(50.06632, -5.71475);
+const p2 = new LatLon(58.64402, -3.07009);
 
-The library includes:
+const d = p1.distanceTo(p2);
+console.assert(d.toFixed(3) == '969954.166');
+```
 
-- `encode`: latitude/longitude point to geohash
-- `decode`: geohash to latitude/longitude
-- `bounds` of a geohash cell
-- `neighbours`: of a geohash
+e.g. for UTM conversions:
 
-More information at www.movable-type.co.uk/scripts/geohash.html.
+```javascript
+import Utm from 'geodesy/utm.js';
 
-geo.js
-------
+const utm = Utm.parse('48 N 377298.745 1483034.794');
+const latlon = utm.toLatLon();
 
-Tools for converting between numeric degrees and degrees / minutes / seconds.
+console.assert(latlon.toString('dms', 2) == '13° 24′ 45.00″ N, 103° 52′ 00.00″ E');
+console.assert(latlon.toUtm().toString() == '48 N 377298.745 1483034.794';
+```
 
-The library includes the following functions:
+e.g. for MGRS/NATO map references:
 
-- `parseDMS`: parse string representing degrees/minutes/seconds into numeric degrees
-- `toLat`: convert decimal degrees to latitude
-- `toLon`: convert decimal degrees to longitude
-- `toBrng`: convert decimal degrees to bearing
+```javascript
+import Mgrs, { LatLon } from 'geodesy/mgrs.js';
 
-Documentation
--------------
+const mgrs = Mgrs.parse('31U DQ 48251 11932');
+const latlon = mgrs.toUtm().toLatLon();
+console.assert(latlon.toString('dms', 2) == '48° 51′ 29.50″ N, 002° 17′ 40.16″ E');
 
-Documentation for all these methods is available at www.movable-type.co.uk/scripts/js/geodesy/docs.
+const p = LatLon.parse('51°28′40.37″N, 000°00′05.29″W');
+const ref = p.toUtm().toMgrs();
+console.assert(ref.toString() == '30U YC 08215 07233');
+```
+
+e.g. for OS grid references:
+
+```javascript
+import OsGridRef, { LatLon } from 'geodesy/osgridref.js';
+
+const gridref = new OsGridRef(651409.903, 313177.270);
+
+const pWgs84 = gridref.toLatLon();
+console.assert(pWgs84.toString('dms', 4) == '52° 39′ 28.7230″ N, 001° 42′ 57.7870″ E');
+
+const pOsgb = gridref.toLatLon(LatLon.datums.OSGB36);
+console.assert(pOsgb.toString('dms', 4) == '52° 39′ 27.2531″ N, 001° 43′ 04.5177″ E');
+```
+
+e.g. for testing if a point is enclosed within a polygon:
+
+```javascript
+import LatLon from 'geodesy/latlon-nvector-spherical.js';
+
+const polygon = [ new LatLon(48,2), new LatLon(49,2), new LatLon(49,3), new LatLon(48,3) ];
+
+const enclosed = new LatLon(48.9,2.4).isEnclosedBy(polygon);
+console.assert(enclosed == true);
+```
+
+e.g. greater parsing & presentation control:
+
+```javascript
+import LatLon from 'geodesy/latlon-spherical.js';
+Dms.separator = ' '; // full-space separator between degrees-minutes-seconds
+
+const p1 = LatLon.parse({ lat: '50:03:59N', lng: '005:42:53W' });
+const p2 = LatLon.parse('58°38′38″N, 003°04′12″W');
+
+const mid = p1.midpointTo(p2);
+console.assert(mid.toString('dms') == '54° 21′ 44″ N, 004° 31′ 50″ W');
+```
+
+e.g. datum conversions:
+
+```javascript
+import LatLon from 'geodesy/latlon-ellipsoidal-datum.js';
+
+const pWgs84 = new LatLon(53.3444, -6.2577);
+
+const pIrl1975 = pWgs84.convertDatum(LatLon.datums.Irl1975);
+console.assert(pIrl1975.toString() == '53.3442° N, 006.2567° W');
+```
+
+(The format of the import statements will vary according to deployment).
